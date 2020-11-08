@@ -18,14 +18,17 @@ private:
     double inaltime;
     int CNP;
     static const float salariuMinim;
-    static int NrAngajati;
+    static int NrCrtAngajati;
 
     void Init() {
-        NrAngajati++;
+        cld = 0;
+        dept = 0;
+        NrCrtAngajati++;
         id = 0;
-        idProfesiiAnterioare = 0;
+        idProfesiiAnterioare = new int[100]; // pentru simplitate presupunem ca avem sub 100
         s = true;
-        numeProfesiiAnterioare = 0;
+        numeProfesiiAnterioare = new char[100];
+        numeProfesiiAnterioare[0] = 0;
         nume[0] = 0;
         salariu = 0;
         inaltime = 0;
@@ -48,8 +51,7 @@ public:
 
     Angajat( int* _idProfesiiAnterioare, bool _s, char* _numeProfesiiAnterioare, char _nume[100], float _salariu, double _inaltime, const int _CNP ) {
         Init();
-        id = NrAngajati;
-        idProfesiiAnterioare = new int[100]; // pentru simplitate presupunem ca avem sub 100
+        id = NrCrtAngajati;
         //copiem din _idProfesiiAnterioare in idProfesiiAnterioare
         int* src = _idProfesiiAnterioare;
         int* dst = idProfesiiAnterioare;
@@ -59,8 +61,8 @@ public:
             src++;
             nrProfesiiAnterioare++;
         }
+        *dst = 0;
         s = _s;
-        numeProfesiiAnterioare = new char[100];
         strcpy( numeProfesiiAnterioare, _numeProfesiiAnterioare );
         strcpy( nume, _nume );
         salariu = _salariu;
@@ -93,11 +95,14 @@ public:
         id = ang.id;
         s = ang.s;
         salariu = ang.salariu;
+        cld = ang.cld;
+        dept = ang.dept;
+        nrProfesiiAnterioare = ang.nrProfesiiAnterioare;
+        memcpy( idProfesiiAnterioare, ang.idProfesiiAnterioare, nrProfesiiAnterioare* sizeof(int) );
+        strcpy( numeProfesiiAnterioare, ang.numeProfesiiAnterioare );
+        salariu = ang.salariu;
+        inaltime = ang.inaltime;
         return *this;
-        // si pointeri???
-
-        //...
-        //toate var
     }
 
     //operator de indexare
@@ -106,26 +111,21 @@ public:
     }
 
     //operator de incrementare
-    Angajat operator ++ () {
+    Angajat& operator ++ () {
         return *this;
     }
 
-    Angajat operator + ( const Angajat& ang ) {
-        Angajat a;
-        strcpy(a.nume, this->nume);
-        strcat(a.nume, "+++++");
-        strcat(a.nume, ang.nume);
-        return a;
+    Angajat& operator + ( const float crestere) {
+        salariu += crestere;
+        return *this;
     }
 
-    Angajat operator - ( const Angajat& ang ) {
-        Angajat a;
-        strcpy(a.nume, this->nume);
-        strcat(a.nume, "-----");
-        strcat(a.nume, ang.nume);
-        return a;
+    Angajat& operator - ( const float diferenta ) {
+        salariu -= diferenta;
+        return *this;
     }
 
+    // conversie implicita la int
     operator int() {
         return CNP;
     }
@@ -156,15 +156,19 @@ public:
     friend ostream &operator<<( ostream &output, const Angajat &ang );
     friend istream &operator>>( istream  &input, Angajat &ang );
 };
-int Angajat::NrAngajati = 0;
-const float Angajat::salariuMinim = 0;
+int Angajat::NrCrtAngajati = 0;
+const float Angajat::salariuMinim = 10;
 
 ostream &operator<<( ostream &output, const Angajat &ang ) {
          output << "Angajat id: " << ang.id << std::endl;
          output << "nume: " << ang.nume << std::endl;
          output << "cladire: " << ang.cld << std::endl;
          output << "departament: " << ang.dept << std::endl;
-         output << "id profesii anterioare: " << ang.idProfesiiAnterioare << std::endl; //???
+         output << "id profesii anterioare: ";
+         for (int i = 0; i < ang.nrProfesiiAnterioare; i++) {
+               output << ang.idProfesiiAnterioare[i] << ", ";
+         }
+         output << std::endl;
          output << "nume profesii anterioare: " << ang.numeProfesiiAnterioare << std::endl; //???
          output << "gen: ";
          if( ang.s == true ) {
@@ -177,10 +181,9 @@ ostream &operator<<( ostream &output, const Angajat &ang ) {
          output << "salariu: " << ang.salariu << std::endl;
          output << "inaltime: " << ang.inaltime << std::endl;
          output << "CNP: " << ang.CNP << std::endl;
+         output << std::endl;
          return output;
 }
-
-// _idProfesiiAnterioare, char* _numeProfesiiAnterioare,
 
 istream &operator>>( istream  &input, Angajat &ang ) {
     cout << "Introduceti CNP: " << endl;
@@ -189,7 +192,7 @@ istream &operator>>( istream  &input, Angajat &ang ) {
     input >> ang.cld;
     cout << "Introduceti departamentul: " << endl;
     input >> ang.dept;
-    cout << "Introduceti genul: " << endl;
+    cout << "Introduceti genul ( 0 = masculin, 1 = feminin ) : " << endl;
     input >> ang.s;
     cout << "Introduceti numele: " << endl;
     input >> ang.nume;
@@ -197,8 +200,6 @@ istream &operator>>( istream  &input, Angajat &ang ) {
     input >> ang.salariu;
     cout << "Introduceti inaltime: " << endl;
     input >> ang.inaltime;
-    cout << "Introduceti salariu: " << endl;
-    input >> ang.salariu;
 
     return input;
 }
@@ -212,18 +213,22 @@ private:
     bool renovare;
     char* Adresa;
     char nume[100];
-    float income;
+    float valoare;
     double inaltime;
     int NrCladire;
     static const double inaltimeEtaj;
-    static int NrCladiri;
+    static int NrCrtCladiri;
 
     void Init() {
+        NrEtaje = 0;
         nume[0] = 0;
-        NrCladiri++;
+        NrCrtCladiri++;
         Adresa = 0;
         ListaCNP = 0;
         renovare = false;
+        valoare = 0;
+        inaltime = 0;
+        NrCladire = 0;
     }
 
 public:
@@ -274,7 +279,7 @@ public:
         NrEtaje = cl.NrEtaje;
         strcpy( Adresa, cl.Adresa );
         inaltime = cl.inaltime;
-        income = cl.income;
+        valoare = cl.valoare;
         renovare = cl.renovare;
         return *this;
     }
@@ -289,28 +294,23 @@ public:
         return *this;
     }
 
-    Cladire operator + ( const Cladire& cl ) {
-        Cladire a;
-        strcpy(a.nume, this->nume);
-        strcat(a.nume, "+++++");
-        strcat(a.nume, cl.nume);
-        return a;
+    Cladire& operator + ( int diferenta ) {
+        valoare += diferenta;
+        return *this;
     }
 
-    Cladire operator - ( const Cladire& cl ) {
-        Cladire a;
-        strcpy(a.nume, this->nume);
-        strcat(a.nume, "-----");
-        strcat(a.nume, cl.nume);
-        return a;
+    Cladire& operator - ( int diferenta ) {
+        valoare -= diferenta;
+        return *this;
     }
 
+    // conversie implicita la int
     operator int() {
         return NrCladire;
     }
 
     bool operator < ( const Cladire& cl ) {
-        return income < cl.income ;
+        return valoare < cl.valoare;
     }
 
     bool operator == ( const Cladire& cl ) {
@@ -321,12 +321,12 @@ public:
     friend istream &operator>>( istream  &input, Cladire &cl );
 };
 
-int Cladire::NrCladiri = 0;
+int Cladire::NrCrtCladiri = 0;
 
 ostream &operator<<( ostream &output, const Cladire &cl ) {
          output << "Numar etaje: " << cl.NrEtaje << std::endl;
          output << "Nume: " << cl.nume << std::endl;
-         output << "Income: " << cl.income << std::endl;
+         output << "Valoare: " << cl.valoare<< std::endl;
          output << "Inaltime: " << cl.inaltime << std::endl;
          output << "CNP urile angajatilor din cladire: " << cl.ListaCNP << std::endl; // ???
          output << "Adresa: " << cl.Adresa << std::endl;
@@ -337,18 +337,17 @@ ostream &operator<<( ostream &output, const Cladire &cl ) {
             output << "Nu trebuie renovat";
          }
          output << std::endl;
+         output << std::endl;
          return output;
 }
-
-// _idProfesiiAnterioare, char* _numeProfesiiAnterioare,
 
 istream &operator>>( istream  &input, Cladire &cl ) {
     cout << "Introduceti numarul de etaje: " << endl;
     input >> cl.NrEtaje;
     cout << "Introduceti numele: " << endl;
     input >> cl.nume;
-    cout << "Introduceti income ul: " << endl;
-    input >> cl.income;
+    cout << "Introduceti valoarea: " << endl;
+    input >> cl.valoare;
     cout << "Introduceti inaltimea: " << endl;
     input >> cl.inaltime;
     cout << "Introduceti adresa: " << endl;
@@ -360,21 +359,24 @@ istream &operator>>( istream  &input, Cladire &cl ) {
 
 class Departament{
     int cod;
-    int NrAngajati;
+    int NrCrtAngajati;
     char nume[100];
 
     void Init() {
+        cod = 0;
+        NrCrtAngajati = 0;
+        nume[0] = 0;
     }
 
 public:
-    Departament(int nrangajati) {
+    Departament(int _cod) {
         Init();
-        NrAngajati = nrangajati;
+        cod = _cod;
     }
 
-    Departament(int nrangajati, char* _nume) {
+    Departament(int _cod, char* _nume) {
         Init();
-        NrAngajati = nrangajati;
+        cod = _cod;
         strcpy( nume, _nume );
     }
 
@@ -414,32 +416,27 @@ public:
     }
 
     //operator de incrementare
-    Departament operator ++ () {
+    Departament& operator ++ () {
         return *this;
     }
 
-    Departament operator + ( const Departament& dep ) {
-        Departament a;
-        strcpy(a.nume, this->nume);
-        strcat(a.nume, "+++++");
-        strcat(a.nume, dep .nume);
-        return a;
+    Departament& operator + ( int ang ) {
+        NrCrtAngajati += ang;
+        return *this;
     }
 
-    Departament operator - ( const Departament& dep ) {
-        Departament a;
-        strcpy(a.nume, this->nume);
-        strcat(a.nume, "-----");
-        strcat(a.nume, dep.nume);
-        return a;
+    Departament& operator - ( int ang ) {
+        NrCrtAngajati -= ang;
+        return *this;
     }
 
+    // conversie implicita la int
     operator int() {
         return cod;
     }
 
     bool operator < ( const Departament& dep ) {
-        return NrAngajati < dep.NrAngajati ;
+        return NrCrtAngajati < dep.NrCrtAngajati ;
     }
 
     bool operator == ( const Departament& dep ) {
@@ -453,8 +450,9 @@ public:
 
 ostream &operator<<( ostream &output, const Departament &dep ) {
          output << "Nume: " << dep.nume << std::endl;
-         output << "Numarul de angajati: " << dep.NrAngajati << std::endl;
+         output << "Numarul de angajati: " << dep.NrCrtAngajati << std::endl;
          output << "Codul: " << dep.cod << std::endl;
+         output << std::endl;
          return output;
 }
 
@@ -465,15 +463,20 @@ istream &operator>>( istream  &input, Departament &dep ) {
     input >> dep.nume;
     cout << "Introduceti codul: " << endl;
     input >> dep.cod;
-    cout << "Introduceti numarul angajatilor: " << endl;
-    input >> dep.NrAngajati;
     return input;
 }
 
 class Firma{
+    char nume[100];
+    int cui;
     std::vector<Angajat> lista;
     std::vector<Cladire> listc;
     std::vector<Departament> listd;
+
+    void Init(){
+        nume[0] = 0;
+        cui = 0;
+    }
 
 public:
     Firma &operator+ (const Angajat& ang) {
@@ -494,13 +497,47 @@ public:
         listd.push_back(dep);
         return *this;
     }
-    int getNrAngajati() {
+    int getNrCrtAngajati() {
         return lista.size();
     }
 
-    friend ostream &operator<<( ostream &output, const Firma &fir );
+    //constructor cu un parametru
+    Firma(int _cui) {
+        Init();
+        cui = _cui;
+    }
 
-    // subpunct 6 7
+    Firma(int _cui, char* _nume) {
+        Init();
+        cui = _cui;
+        strcpy( nume, _nume );
+    }
+
+    //default constructor
+    Firma(){
+        Init();
+    }
+
+    //constructor de copiere
+    Firma( const Firma& fir ) {
+        Init();
+        *this = fir;
+        // operator =(ang)
+    }
+
+    //destructor
+    ~Firma() {
+    }
+
+    //operator de atribuire
+    Firma& operator = ( const Firma& fir ) {
+        cui = fir.cui;
+        strcpy( nume, fir.nume );
+        return *this;
+    }
+
+    friend ostream &operator<<( ostream &output, const Firma &fir );
+    friend istream &operator>>( istream  &input, Firma &fir );
 };
 
 ostream &operator<<( ostream &output, const Firma &fir ) {
@@ -508,18 +545,29 @@ ostream &operator<<( ostream &output, const Firma &fir ) {
     for (std::vector<Angajat>::const_iterator it = fir.lista.begin(); it != fir.lista.end(); it++) {
         cout << *it;
     }
+    cout << endl;
 
     cout << "Cladiri: " << endl;
     for (std::vector<Cladire>::const_iterator it = fir.listc.begin(); it != fir.listc.end(); it++) {
         cout << *it;
     }
+    cout << endl;
 
     cout << "Departamente: " << endl;
     for (std::vector<Departament>::const_iterator it = fir.listd.begin(); it != fir.listd.end(); it++) {
         cout << *it;
     }
+    cout << endl;
 
     return output;
+}
+
+istream &operator>>( istream  &input, Firma &fir ) {
+    cout << "Introduceti numele firmei: " << endl;
+    input >> fir.nume;
+    cout << "Introduceti cui-ul: " << endl;
+    input >> fir.cui;
+    return input;
 }
 
 int main()
@@ -527,40 +575,35 @@ int main()
     //Angajat ang(123);
    // ang.id = 10;
     Firma fir;
-    int n, m;
+    int n;
+    cout << "Introduceti informatii despre firma: " << endl;
+    cin >> fir;
     while ( true ){
-        cout << "Pentru a accesa sau modifica informatii despre angajati apasati tasta 1, pentru cladiri tasta 2, pentru departamente tasta 3, iar pentru a iesi tasta 0" << endl;
+        cout << "Pentru a introduce informatii despre angajati apasati tasta 1, pentru cladiri tasta 2, pentru departamente tasta 3, pentru a afisa toata firma tasta 4, iar pentru a iesi tasta 0" << endl;
         cin >> n;
         cout << endl;
         if( n == 0 ) {
             break;
         }
         if( n == 1 ){
-            cout << "Pentru a afisa informatii despre angajatii firmei apasati tasta 1, iar pentru a introduce informatii tasta 2" << endl;
-            cin >> m;
-            if ( m == 1 ){
-                cout << fir;
-            }
-            else {
-                //adaugam angajat nou
-                Angajat ang;
-                cin >> ang;
-                fir+ang;
-            }
+            //adaugam angajat nou
+            Angajat ang;
+            cin >> ang;
+            fir+ang;
         }
-        else {
-            cout << "Pentru a afisa informatii despre cladirile firmei apasati tasta 1, iar pentru a introduce informatii tasta 2" << endl;
-            cin >> m;
-            if ( m == 1 ){
-                cout << fir; // for dupa ce merge
-            }
-            else {
-                Cladire cl;
-                cin >> cl;
-                fir+cl;
-            }
+        if ( n == 2 ) {
+            Cladire cl;
+            cin >> cl;
+            fir+cl;
+        }
+        if ( n == 3 ) {
+            Departament dep;
+            cin >> dep;
+            fir+dep;
+        }
+        if ( n == 4 ) {
+            cout << fir;
         }
     }
-
     return 0;
 }
