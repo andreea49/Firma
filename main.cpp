@@ -223,7 +223,7 @@ private:
         NrEtaje = 0;
         nume[0] = 0;
         NrCrtCladiri++;
-        Adresa = 0;
+        Adresa = new char[100];
         ListaCNP = 0;
         renovare = false;
         valoare = 0;
