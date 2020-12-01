@@ -142,7 +142,7 @@ public:
         salariu = _salariu;
     }
 
-    float GetSalariu() {
+    float GetSalariu() const {
         return salariu;
     }
 
@@ -153,9 +153,28 @@ public:
         nrProfesiiAnterioare++;
     }
 
+    virtual float GetBonus() const = 0;
+
+
+
     friend ostream &operator<<( ostream &output, const Angajat &ang );
     friend istream &operator>>( istream  &input, Angajat &ang );
 };
+
+class Casier : public Angajat {
+public:
+    float GetBonus() const {
+        return GetSalariu() * 2;
+    }
+};
+
+class Manager : public Angajat {
+public:
+    float GetBonus() const {
+        return GetSalariu() * 10;
+    }
+};
+
 int Angajat::NrCrtAngajati = 0;
 const float Angajat::salariuMinim = 10;
 
@@ -179,6 +198,7 @@ ostream &operator<<( ostream &output, const Angajat &ang ) {
          }
          output << std::endl;
          output << "salariu: " << ang.salariu << std::endl;
+         output << "bonus: " << ang.GetBonus() << std::endl;
          output << "inaltime: " << ang.inaltime << std::endl;
          output << "CNP: " << ang.CNP << std::endl;
          output << std::endl;
@@ -290,7 +310,7 @@ public:
     }
 
     //operator de incrementare
-    Cladire operator ++ () {
+    Cladire& operator ++ () {
         return *this;
     }
 
@@ -317,8 +337,28 @@ public:
         return NrCladire == cl.NrCladire;
     }
 
+    float GetValoare() const {
+        return valoare;
+    }
+
+    virtual float GetBonus() const = 0;
+
     friend ostream &operator<<( ostream &output, const Cladire &cl );
     friend istream &operator>>( istream  &input, Cladire &cl );
+};
+
+class Magazin : public Cladire {
+public:
+    float GetBonus() const {
+        return GetValoare() * 2;
+    }
+};
+
+class Birou  : public Cladire {
+public:
+    float GetBonus() const {
+        return GetValoare() * 10;
+    }
 };
 
 int Cladire::NrCrtCladiri = 0;
@@ -327,6 +367,7 @@ ostream &operator<<( ostream &output, const Cladire &cl ) {
          output << "Numar etaje: " << cl.NrEtaje << std::endl;
          output << "Nume: " << cl.nume << std::endl;
          output << "Valoare: " << cl.valoare<< std::endl;
+         output << "Valoarea modificata pentru cladirea precizata: " << cl.GetBonus() << std::endl;
          output << "Inaltime: " << cl.inaltime << std::endl;
          output << "CNP urile angajatilor din cladire: " << cl.ListaCNP << std::endl; // ???
          output << "Adresa: " << cl.Adresa << std::endl;
@@ -469,8 +510,8 @@ istream &operator>>( istream  &input, Departament &dep ) {
 class Firma{
     char nume[100];
     int cui;
-    std::vector<Angajat> lista;
-    std::vector<Cladire> listc;
+    std::vector<Angajat*> lista;
+    std::vector<Cladire*> listc;
     std::vector<Departament> listd;
 
     void Init(){
@@ -479,16 +520,26 @@ class Firma{
     }
 
 public:
-    Firma &operator+ (const Angajat& ang) {
+
+    ~Firma () {
+        for (std::vector<Angajat*>::const_iterator it = lista.begin(); it != lista.end(); it++) {
+            delete *it;
+        }
+        for (std::vector<Cladire*>::const_iterator it = listc.begin(); it != listc.end(); it++) {
+            delete *it;
+        }
+    }
+
+    Firma &operator+ (Angajat* ang) {
         lista.push_back(ang);
         return *this;
     }
 
-    Angajat& getang( int id ) {
+    Angajat* getang( int id ) {
         return lista[id];
     }
 
-    Firma &operator+ (const Cladire& cl) {
+    Firma &operator+ (Cladire* cl) {
         listc.push_back(cl);
         return *this;
     }
@@ -525,10 +576,6 @@ public:
         // operator =(ang)
     }
 
-    //destructor
-    ~Firma() {
-    }
-
     //operator de atribuire
     Firma& operator = ( const Firma& fir ) {
         cui = fir.cui;
@@ -542,14 +589,14 @@ public:
 
 ostream &operator<<( ostream &output, const Firma &fir ) {
     cout << "Angajati: " << endl;
-    for (std::vector<Angajat>::const_iterator it = fir.lista.begin(); it != fir.lista.end(); it++) {
-        cout << *it;
+    for (std::vector<Angajat*>::const_iterator it = fir.lista.begin(); it != fir.lista.end(); it++) {
+        cout << *(*it);
     }
     cout << endl;
 
     cout << "Cladiri: " << endl;
-    for (std::vector<Cladire>::const_iterator it = fir.listc.begin(); it != fir.listc.end(); it++) {
-        cout << *it;
+    for (std::vector<Cladire*>::const_iterator it = fir.listc.begin(); it != fir.listc.end(); it++) {
+        cout << *(*it);
     }
     cout << endl;
 
@@ -575,7 +622,7 @@ int main()
     //Angajat ang(123);
    // ang.id = 10;
     Firma fir;
-    int n;
+    int n, nr;
     cout << "Introduceti informatii despre firma: " << endl;
     cin >> fir;
     while ( true ){
@@ -586,15 +633,31 @@ int main()
             break;
         }
         if( n == 1 ){
+            cout << "Apasati tasta 1 pentru casier, iar 2 pentru manager" << endl;
             //adaugam angajat nou
-            Angajat ang;
-            cin >> ang;
-            fir+ang;
+            cin >> nr;
+            Angajat* a = NULL;
+            if ( nr == 1 ) {
+                a = new Casier;
+            }
+            else {
+                a = new Manager;
+            }
+            cin >> *a;
+            fir + a;
         }
         if ( n == 2 ) {
-            Cladire cl;
-            cin >> cl;
-            fir+cl;
+            cout << "Apasati tasta 1 pentru magazine, iar 2 pentru birouri" << endl;
+            cin >> nr;
+            Cladire* c = NULL;
+            if ( nr == 1 ) {
+                c = new Magazin;
+            }
+            else {
+                c = new Birou;
+            }
+            cin >> *c;
+            fir + c;
         }
         if ( n == 3 ) {
             Departament dep;
