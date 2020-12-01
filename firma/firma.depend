@@ -1,6 +1,0 @@
-# depslib dependency file v1.0
-1606834064 source:c:\users\andreea\desktop\c++\firma\main.cpp
-	<vector>
-	<iostream>
-	<bits/stdc++.h>
-
