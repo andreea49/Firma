@@ -3,9 +3,49 @@
 #include <bits/stdc++.h>
 
 using namespace std;
+bool print=false;
+
+void readString(istream  &input, string& out) {
+    string buffer;
+    getline(input, buffer);
+    while ((buffer.size() == 0) || (buffer[0] == '#')) {
+        getline(input, buffer);
+    }
+    if (input.eof()) {
+        cerr << "invalid input format" << endl;
+        exit(1);
+    }
+    out = buffer;
+}
+
+void readNumber(istream  &input, int& out) {
+    string buffer;
+    getline(input, buffer);
+    while (buffer[0] == '#') {
+        getline(input, buffer);
+    }
+    if (input.eof()) {
+        cerr << "invalid input format" << endl;
+        exit(1);
+    }
+    out = stoi(buffer);
+}
+
+void readDouble(istream  &input, double& out) {
+    string buffer;
+    getline(input, buffer);
+    while (buffer[0] == '#') {
+        getline(input, buffer);
+    }
+    if (input.eof()) {
+        cerr << "invalid input format" << endl;
+        exit(1);
+    }
+    out = stod(buffer);
+}
 
 class Angajat{
-
+    static const int MAX_NUME = 100;
 private:
 
     int id, cld, dept;
@@ -13,7 +53,7 @@ private:
     int nrProfesiiAnterioare;
     bool s;
     char* numeProfesiiAnterioare;
-    char nume[100];
+    char nume[MAX_NUME];
     float salariu;
     double inaltime;
     int CNP;
@@ -83,7 +123,7 @@ public:
     }
 
     //destructor
-    ~Angajat() {
+    virtual ~Angajat() {
         delete idProfesiiAnterioare;
         delete numeProfesiiAnterioare;
     }
@@ -206,25 +246,45 @@ ostream &operator<<( ostream &output, const Angajat &ang ) {
 }
 
 istream &operator>>( istream  &input, Angajat &ang ) {
-    cout << "Introduceti CNP: " << endl;
-    input >> ang.CNP;
-    cout << "Introduceti cladirea: " << endl;
-    input >> ang.cld;
-    cout << "Introduceti departamentul: " << endl;
-    input >> ang.dept;
-    cout << "Introduceti genul ( 0 = masculin, 1 = feminin ) : " << endl;
-    input >> ang.s;
-    cout << "Introduceti numele: " << endl;
-    input >> ang.nume;
-    cout << "Introduceti salariu: " << endl;
-    input >> ang.salariu;
-    cout << "Introduceti inaltime: " << endl;
-    input >> ang.inaltime;
+    if (print)
+        cout << "Introduceti CNP: " << endl;
+    //input >> ang.CNP;
+    readNumber(input, ang.CNP);
+    if (print)
+        cout << "Introduceti cladirea: " << endl;
+    readNumber(input, ang.cld);
+    if (print)
+        cout << "Introduceti departamentul: " << endl;
+    readNumber(input, ang.dept);
+    if (print)
+        cout << "Introduceti genul ( 0 = masculin, 1 = feminin ) : " << endl;
+    int tmpi;
+    readNumber(input, tmpi);
+    ang.s = (tmpi == 0);
+    if (print)
+        cout << "Introduceti numele: " << endl;
+    string tmp;
+    readString(input, tmp);
+    if (tmp.size() > Angajat::MAX_NUME) {
+        strncpy(ang.nume, tmp.c_str(), Angajat::MAX_NUME - 1 /*consideram doar primele N charactere*/);
+        ang.nume[Angajat::MAX_NUME] = 0;
+    } else {
+        strcpy(ang.nume, tmp.c_str());
+    }
+    if (print)
+        cout << "Introduceti salariu: " << endl;
+    double tmpd;
+    readDouble(input, tmpd);
+    ang.salariu = tmpd;
+    if (print)
+        cout << "Introduceti inaltime: " << endl;
+    readDouble(input, ang.inaltime);
 
     return input;
 }
 
 class Cladire{
+    static const int MAX_ADDR = 100;
 
 private:
 
@@ -232,7 +292,7 @@ private:
     int* ListaCNP;
     bool renovare;
     char* Adresa;
-    char nume[100];
+    string nume;
     float valoare;
     double inaltime;
     int NrCladire;
@@ -243,7 +303,7 @@ private:
         NrEtaje = 0;
         nume[0] = 0;
         NrCrtCladiri++;
-        Adresa = new char[100];
+        Adresa = new char[MAX_ADDR];
         ListaCNP = 0;
         renovare = false;
         valoare = 0;
@@ -260,7 +320,7 @@ public:
     Cladire(int nrcladire, char* _nume) {
         Init();
         NrCladire = nrcladire;
-        strcpy( nume, _nume );
+        nume = _nume;
     }
 
     //default constructor
@@ -277,7 +337,7 @@ public:
 
     void SetAdresa( char* _adresa ){
         delete Adresa; // elibereaza vechea resursa
-        Adresa = new char[100];
+        Adresa = new char[MAX_ADDR];
         strcpy(Adresa, _adresa);
     }
 
@@ -285,7 +345,7 @@ public:
         return Adresa;
     }
     //destructor
-    ~Cladire() {
+    virtual ~Cladire() {
         delete ListaCNP;
         delete Adresa;
     }
@@ -295,7 +355,7 @@ public:
     //operator de atribuire
     Cladire& operator = ( const Cladire& cl ) {
         NrCladire = cl.NrCladire;
-        strcpy( nume, cl.nume );
+        nume = cl.nume;
         NrEtaje = cl.NrEtaje;
         strcpy( Adresa, cl.Adresa );
         inaltime = cl.inaltime;
@@ -383,25 +443,43 @@ ostream &operator<<( ostream &output, const Cladire &cl ) {
 }
 
 istream &operator>>( istream  &input, Cladire &cl ) {
-    cout << "Introduceti numarul de etaje: " << endl;
-    input >> cl.NrEtaje;
-    cout << "Introduceti numele: " << endl;
-    input >> cl.nume;
-    cout << "Introduceti valoarea: " << endl;
-    input >> cl.valoare;
-    cout << "Introduceti inaltimea: " << endl;
-    input >> cl.inaltime;
-    cout << "Introduceti adresa: " << endl;
-    input >> cl.Adresa;
-    cout << "Introduceti daca ii trebuie renovare: " << endl;
-    input >> cl.renovare;
+    if (print)
+        cout << "Introduceti numarul de etaje: " << endl;
+    readNumber(input, cl.NrEtaje);
+    if (print)
+        cout << "Introduceti numele: " << endl;
+    readString(input, cl.nume);
+    if (print)
+        cout << "Introduceti valoarea: " << endl;
+    double tmp;
+    readDouble(input, tmp);
+    cl.valoare = tmp;
+    if (print)
+        cout << "Introduceti inaltimea: " << endl;
+    readDouble(input, cl.inaltime);
+    if (print)
+        cout << "Introduceti adresa: " << endl;
+    string tmps;
+    readString(input, tmps);
+    if (tmps.size() > Cladire::MAX_ADDR) {
+        strncpy(cl.Adresa, tmps.c_str(), Cladire::MAX_ADDR - 1);
+        cl.Adresa[Cladire::MAX_ADDR-1] = 0;
+    } else {
+        strcpy(cl.Adresa, tmps.c_str());
+    }
+
+    if (print)
+        cout << "Introduceti daca ii trebuie renovare: " << endl;
+    int tmpi;
+    readNumber(input, tmpi);
+    cl.renovare = (tmpi == 0);
     return input;
 }
 
 class Departament{
     int cod;
     int NrCrtAngajati;
-    char nume[100];
+    string nume;
 
     void Init() {
         cod = 0;
@@ -418,7 +496,7 @@ public:
     Departament(int _cod, char* _nume) {
         Init();
         cod = _cod;
-        strcpy( nume, _nume );
+        nume = _nume;
     }
 
     //default constructor
@@ -434,11 +512,11 @@ public:
     }
 
     void SetNume( char* _nume ){
-        strcpy(nume, _nume);
+        nume = _nume;
     }
 
-    char* GetNume(){
-        return nume;
+    const char* GetNume(){
+        return nume.c_str();
     }
     //destructor
     ~Departament(){
@@ -447,7 +525,7 @@ public:
     //operator de atribuire
     Departament& operator = ( const Departament& dep ) {
         cod = dep.cod;
-        strcpy( nume, dep.nume );
+        nume = dep.nume;
         return *this;
     }
 
@@ -491,7 +569,7 @@ public:
 
 ostream &operator<<( ostream &output, const Departament &dep ) {
          output << "Nume: " << dep.nume << std::endl;
-         output << "Numarul de angajati: " << dep.NrCrtAngajati << std::endl;
+          output << "Numarul de angajati: " << dep.NrCrtAngajati << std::endl;
          output << "Codul: " << dep.cod << std::endl;
          output << std::endl;
          return output;
@@ -500,22 +578,23 @@ ostream &operator<<( ostream &output, const Departament &dep ) {
 // _idProfesiiAnterioare, char* _numeProfesiiAnterioare,
 
 istream &operator>>( istream  &input, Departament &dep ) {
-    cout << "Introduceti numele: " << endl;
-    input >> dep.nume;
-    cout << "Introduceti codul: " << endl;
-    input >> dep.cod;
+    if (print)
+        cout << "Introduceti numele: " << endl;
+    readString(input, dep.nume);
+    if (print)
+        cout << "Introduceti codul: " << endl;
+    readNumber(input, dep.cod);
     return input;
 }
 
 class Firma{
-    char nume[100];
+    string nume;
     int cui;
     std::vector<Angajat*> lista;
     std::vector<Cladire*> listc;
     std::vector<Departament> listd;
 
     void Init(){
-        nume[0] = 0;
         cui = 0;
     }
 
@@ -561,7 +640,7 @@ public:
     Firma(int _cui, char* _nume) {
         Init();
         cui = _cui;
-        strcpy( nume, _nume );
+        nume = _nume;
     }
 
     //default constructor
@@ -579,7 +658,7 @@ public:
     //operator de atribuire
     Firma& operator = ( const Firma& fir ) {
         cui = fir.cui;
-        strcpy( nume, fir.nume );
+        nume = fir.nume;
         return *this;
     }
 
@@ -588,45 +667,83 @@ public:
 };
 
 ostream &operator<<( ostream &output, const Firma &fir ) {
-    cout << "Angajati: " << endl;
+    output << "Angajati: " << endl;
     for (std::vector<Angajat*>::const_iterator it = fir.lista.begin(); it != fir.lista.end(); it++) {
-        cout << *(*it);
+        output << *(*it);
     }
-    cout << endl;
+    output << endl;
 
-    cout << "Cladiri: " << endl;
+    output << "Cladiri: " << endl;
     for (std::vector<Cladire*>::const_iterator it = fir.listc.begin(); it != fir.listc.end(); it++) {
-        cout << *(*it);
+        output << *(*it);
     }
-    cout << endl;
+    output << endl;
 
-    cout << "Departamente: " << endl;
+    output << "Departamente: " << endl;
     for (std::vector<Departament>::const_iterator it = fir.listd.begin(); it != fir.listd.end(); it++) {
-        cout << *it;
+        output << *it;
     }
-    cout << endl;
+    output << endl;
 
     return output;
 }
 
 istream &operator>>( istream  &input, Firma &fir ) {
-    cout << "Introduceti numele firmei: " << endl;
-    input >> fir.nume;
-    cout << "Introduceti cui-ul: " << endl;
-    input >> fir.cui;
+    int nrCasieri, nrMng, nrBirou, nrMagazine, nrDep;
+
+    if (print)
+            cout << "Introduceti numele firmei: " << endl;
+    readString(input, fir.nume);
+
+    if (print)
+            cout << "Introduceti cui-ul: " << endl;
+    readNumber(input, fir.cui);
+    readNumber(input, nrCasieri);
+    readNumber(input, nrMng);
+    readNumber(input, nrBirou);
+    readNumber(input, nrMagazine);
+    readNumber(input, nrDep);
+    for (int i = 0; i < nrCasieri; i++) {
+        Casier* a = new Casier;
+        input >> *a;
+        fir + a;
+    }
+    for (int i = 0; i < nrMng; i++) {
+        Manager* a = new Manager;
+        input >> *a;
+        fir + a;
+    }
+    for (int i = 0; i < nrBirou; i++) {
+        Birou* a = new Birou;
+        input >> *a;
+        fir + a;
+    }
+    for (int i = 0; i < nrMagazine; i++) {
+        Magazin* a = new Magazin;
+        input >> *a;
+        fir + a;
+    }
+    for (int i = 0; i < nrDep; i++) {
+        Departament a;
+        input >> a;
+        fir + a;
+    }
     return input;
 }
 
 int main()
 {
-    //Angajat ang(123);
-   // ang.id = 10;
     Firma fir;
     int n, nr;
-    cout << "Introduceti informatii despre firma: " << endl;
-    cin >> fir;
     while ( true ){
-        cout << "Pentru a introduce informatii despre angajati apasati tasta 1, pentru cladiri tasta 2, pentru departamente tasta 3, pentru a afisa toata firma tasta 4, iar pentru a iesi tasta 0" << endl;
+        cout << "Apasati:" << endl <<
+        "       1 -> pentru angajati" << endl <<
+        "       2 -> pentru cladiri" << endl <<
+        "       3 -> pentru departamente" << endl <<
+        "       4 -> pentru a afisa toata firma" << endl <<
+        "       5 -> pentru a incarca totul dintr-un fisier" << endl <<
+        "       6 -> pentru a salva totul intr-un fisier" << endl <<
+        "       0 -> pentru a iesi" << endl;
         cin >> n;
         cout << endl;
         if( n == 0 ) {
@@ -666,6 +783,14 @@ int main()
         }
         if ( n == 4 ) {
             cout << fir;
+        }
+        if ( n == 5 ) {
+            ifstream ifs("file.txt");
+            ifs >> fir;
+        }
+        if ( n == 6 ) {
+            ofstream ofs("out.txt");
+            ofs << fir;
         }
     }
     return 0;
